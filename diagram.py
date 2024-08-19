@@ -42,8 +42,10 @@ plt.xticks(rotation=45)
 # Add doses lines
 nine_pm = pd.to_datetime('21:00:00', format='%H:%M:%S')
 nine_am = pd.to_datetime('09:00:00', format='%H:%M:%S')
+three_pm_dose = pd.to_datetime('15:00:00', format='%H:%M:%S')
 ax.axhline(nine_pm, color='red', linestyle='-', linewidth=1, label='9 PM')
 ax.axhline(nine_am, color='red', linestyle='-', linewidth=1, label='9 AM')
+ax.axhline(three_pm_dose, color='red', linestyle='-', linewidth=1, label='3 PM')
 
 # Add shaded region between 3 PM and 5 PM
 three_pm = pd.to_datetime('15:00:00', format='%H:%M:%S')
