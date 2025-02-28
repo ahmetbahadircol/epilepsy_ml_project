@@ -1,44 +1,77 @@
 import pandas as pd
+from prophet import Prophet
 from datetime import datetime
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
+import plotly.io as pio
+
 
 class GetDataFromCSV:
     def __init__(self, path_way: str):
-        self.header_names = ["name", "begin_date", "end_date"]
+        self.header_names = ["datetime"]
         self.path_way = path_way
-        
-    def get_data(self) -> pd.DataFrame:
-        return pd.read_csv(self.path_way, on_bad_lines="skip", header=None, names=self.header_names)
 
-    def prapare_data(self, df: pd.DataFrame=None) -> pd.DataFrame:
+    def get_data(self) -> pd.DataFrame:
+        return pd.read_csv(
+            "data2.csv",
+            parse_dates=self.header_names,
+            dayfirst=True,
+        )
+
+    def prapare_data(self, df: pd.DataFrame = None) -> pd.DataFrame:
         df = df or self.get_data()
-        df['begin_date'] = pd.to_datetime(df['begin_date'])
-        # df['date'] = df['begin_date'].dt.date
-        # df['time'] = df['begin_date'].dt.time
-        df.drop(columns=["name", "end_date"], inplace=True)
-        df.set_index('begin_date', inplace=True)
-        df['time'] = df.index.hour * 3600 + df.index.minute * 60
+        df["datetime"] = pd.to_datetime(df["datetime"], dayfirst=True, utc=True)
+        df["datetime"] = df["datetime"].dt.tz_convert(None)
+        df.set_index("datetime", inplace=True)
+        df["time"] = df.index.hour * 3600 + df.index.minute * 60
         return df
 
 
 def forecast():
-    df = GetDataFromCSV("data.csv").prapare_data()
+    # Prepare data
+    df = GetDataFromCSV("data2.csv").prapare_data()
+    # Ensure 'time' is numeric and drop NaN values
+    df["time"] = pd.to_numeric(df["time"], errors="coerce")
+    df = df.dropna(subset=["time"])  # Remove rows with NaN in 'time'
 
-    # Exponential Smoothing
-    print(df)
-    model = ExponentialSmoothing(df['time'], trend='add', seasonal='add', seasonal_periods=4)
+    # Initialize and fit the model
+    model = ExponentialSmoothing(
+        df["time"], trend="add", seasonal="add", seasonal_periods=4
+    )
     fit = model.fit()
 
     # Forecast
-    future_dates = pd.date_range(start=datetime.today(), periods=10, freq='D')
+    future_dates = pd.date_range(start=datetime.today(), periods=10, freq="D")
     predictions = fit.forecast(steps=len(future_dates))
-    predictions = pd.DataFrame(predictions, index=future_dates, columns=['forecast_time(s)'])
-    breakpoint()
+    predictions = pd.DataFrame(
+        predictions, index=future_dates, columns=["forecast_time(s)"]
+    )
 
-    predictions['forecast_time(h)'] = pd.to_datetime(predictions['forecast_time(s)'], unit='s').time
+    # Convert forecasted time from seconds to hours:minutes:seconds
+    predictions["forecast_time(h)"] = pd.to_datetime(
+        predictions["forecast_time(s)"], unit="s"
+    ).dt.strftime("%H:%M:%S")
 
     print(predictions)
 
 
-# print(GetDataFromCSV("data.csv").prapare_data())
-forecast()
+def p_model():
+    df = GetDataFromCSV("data2.csv").prapare_data()
+    model = Prophet()
+    model.fit(df)
+
+    # Predict future
+    future_dates = model.make_future_dataframe(
+        periods=90, freq="D"
+    )  # Predict next 30 days
+    forecast = model.predict(future_dates)
+
+    # Plot forecast
+    model.plot(forecast)
+
+    pio.renderers.default = "browser"
+
+    print(forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]])
+
+
+if __name__ == "__main__":
+    p_model()
