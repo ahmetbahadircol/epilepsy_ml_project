@@ -13,16 +13,23 @@ df = pd.read_csv(
     dayfirst=True,
 )
 
-# Ensure the datetime column is in datetime format
-df["datetime"] = pd.to_datetime(df["datetime"])
+# Ensure the datetime column is in datetime format, handling errors
+df["datetime"] = pd.to_datetime(
+    df["datetime"].str.strip(), format="%d.%m.%Y %H:%M", errors="coerce"
+)
+
+# Drop rows where datetime conversion failed (optional)
+df = df.dropna(subset=["datetime"])
 
 # Extract date and time
 df["date"] = df["datetime"].dt.date
 df["time"] = df["datetime"].dt.time
 
 # Convert time to a datetime object with only the time component
-df["time"] = pd.to_datetime(df["time"].astype(str), format="%H:%M:%S")
+df["time"] = pd.to_datetime(df["time"].astype(str), format="%H:%M:%S", errors="coerce")
+
 print(df)
+
 
 # Create the plot
 fig, ax = plt.subplots(figsize=(10, 6))
