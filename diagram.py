@@ -58,6 +58,12 @@ ax.axhline(nine_pm, color="red", linestyle="-", linewidth=1, label="9 PM")
 ax.axhline(nine_am, color="red", linestyle="-", linewidth=1, label="9 AM")
 ax.axhline(three_pm_dose, color="red", linestyle="-", linewidth=1, label="3 PM")
 
+# Add a vertical line at 26.04.2025
+specific_date = pd.to_datetime("26.04.2025", format="%d.%m.%Y").date()
+ax.axvline(
+    x=specific_date, color="black", linestyle="--", linewidth=2, label="VORANIGO"
+)
+
 # Add shaded region between 3 PM and 5 PM
 three_pm = pd.to_datetime("15:00:00", format="%H:%M:%S")
 five_pm = pd.to_datetime("17:00:00", format="%H:%M:%S")
