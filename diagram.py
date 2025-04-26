@@ -8,7 +8,7 @@ pd.set_option("display.max_columns", None)
 # Read the CSV file
 date_column = ["datetime"]
 df = pd.read_csv(
-    "data2.csv",
+    "data.csv",
     parse_dates=date_column,
     dayfirst=True,
 )
@@ -27,8 +27,6 @@ df["time"] = df["datetime"].dt.time
 
 # Convert time to a datetime object with only the time component
 df["time"] = pd.to_datetime(df["time"].astype(str), format="%H:%M:%S", errors="coerce")
-
-print(df)
 
 
 # Create the plot
